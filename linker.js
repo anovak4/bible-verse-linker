@@ -29,7 +29,7 @@ var bible_version = "nkjv";
 
 // this is simply the link from the address bar while in the doc
 // your account must have access to edit the doc
-var doc_link = "https://docs.google.com/document/d/1zXZ97LJCWgLCQ020hsMypwunHve-MiL7TrcIcAvzpR0/edit";
+var doc_link = "https://docs.google.com/document/d/1v6A79P2zOSy1D-AIXvoBwU9bGg0Om-67BKBBCM_lUvo/edit#heading=h.pydjwtz7792";
 
 // ***************************************************************
 // ******************** END section to edit **********************
@@ -159,7 +159,7 @@ function link() {
 
 
 function search() {
-  search_string = '(?i)' + current_book + '\.? ([0-9]+:?([0-9;:,-]?)+ ?)+';
+  search_string = '(?i) ' + current_book + '\.? ([0-9]+:?([0-9;:,-]?)+ ?)+';
   search_field = doc.getBody();
   search_result = search_field.findText(search_string);
   process();
