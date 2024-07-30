@@ -152,7 +152,7 @@ function link() {
 
 function search() {
   current_book_name = current_book_name.replace(" ", " *"); // to match multiple spaces in case of typos
-  search_string = "(?i)" + current_book_name + "\\.? *([0-9]+:?([0-9;:,-]?)+ ?)+"; 
+  search_string = "(?i)" + current_book_name + "\\.? *([0-9]+[:|v]?([0-9;:,-–—]?)+ ?)+"; 
   // so apparently I need \\ instead of \ to escape the period, becuase the string literal is using the single \ as an escape character. So I need to escape the \ for the string so the regexp can use it as an escape character.
   search_field = doc.getBody();
   search_result = search_field.findText(search_string);
@@ -238,9 +238,9 @@ function split_references(reference_string) {
     }
   });
 
-  // take out :, -, and / that are at the end of any references
+  // take out :, -, –, —, and / that are at the end of any references
   for (let i = 0; i < references.length; i++) {
-    if (references[i].ref.endsWith(":") || references[i].ref.endsWith("-") || references[i].ref.endsWith("/")) {
+    if (references[i].ref.endsWith(":") || references[i].ref.endsWith("-") || references[i].ref.endsWith("–") || references[i].ref.endsWith("—") || references[i].ref.endsWith("/")) {
       references[i].ref = references[i].ref.slice(0,-1);
       references[i].end_pos--;
     }
@@ -250,7 +250,7 @@ function split_references(reference_string) {
   references[0].ref = references[0].ref.trim();
   let index = references[0].ref.length;
   for (let i = references[0].ref.length - 1; i > 0; i--) {
-    if (!((references[0].ref[i] >= '0' && references[0].ref[i] <= '9') || references[0].ref[i] == ':' || references[0].ref[i] == '-')) {
+    if (!((references[0].ref[i] >= '0' && references[0].ref[i] <= '9') || references[0].ref[i] == ':' || references[0].ref[i] == 'v' || references[0].ref[i] == '-' || references[0].ref[i] == '–' || references[0].ref[i] == '—')) {
       index = i + 1;
       break;
     }
@@ -269,16 +269,20 @@ function parse_reference(reference) {
   }
 
   // set chapter
-  if (reference.after_comma == true && !ref.includes(':')) {
+  if (reference.after_comma == true && !(ref.includes(':') || ref.includes('v'))) {
     // chapter is already set from last reference, don't need to do anything
   } else if (single_chapter_bible_nums.includes(current_book.num)) {
     chapter = 1;
-    if (ref.includes(':')) ref = ref.slice(ref.indexOf(':') + 1);
+    if (ref.includes(':')) {
+      ref = ref.slice(ref.indexOf(':') + 1);
+    } else if (ref.includes('v')) {
+      ref = ref.slice(ref.indexOf('v') + 1);
+    }
   } else {
     for (let i = 0; i < ref.length + 1; i++) {
-      if (i == ref.length || ref[i] == ':' || ref[i] == '-' || ref[i] == ';') {
+      if (i == ref.length || ref[i] == ':' || ref[i] == 'v' || ref[i] == '-' || ref[i] == '–' || ref[i] == '—' || ref[i] == ';') {
         chapter = ref.slice(0,i);
-        if (i < ref.length && ref[i] == ':') {
+        if (i < ref.length && (ref[i] == ':' || ref[i] == 'v')) {
           ref = ref.slice(i + 1); // take out the chapter so it's easier to find verses
         } else {
           ref = "";
@@ -293,10 +297,20 @@ function parse_reference(reference) {
 
   // set verses
   if (ref.length > 0) {
-    if (ref.includes(':')) ref = ref.slice(ref.indexOf(':') + 1);
+    if (ref.includes(':')) {
+      ref = ref.slice(ref.indexOf(':') + 1);
+    } else if (ref.includes('v')) {
+      ref = ref.slice(ref.indexOf('v') + 1);
+    }
     if (ref.includes('-')) {
       verse_start = ref.slice(0, ref.indexOf('-'));
       verse_end = ref.slice(ref.indexOf('-') + 1);
+    } else if (ref.includes('–')) { // en dash
+      verse_start = ref.slice(0, ref.indexOf('–'));
+      verse_end = ref.slice(ref.indexOf('–') + 1);
+    } else if (ref.includes('—')) { // em dash
+      verse_start = ref.slice(0, ref.indexOf('—'));
+      verse_end = ref.slice(ref.indexOf('—') + 1);
     } else {
       verse_start = ref;
       verse_end = verse_start;
