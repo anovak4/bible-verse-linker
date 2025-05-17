@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <title>Bible Verse Linker</title>
+</head>
+<body>
+<div class="sidebar">
+  <form>
+    <div style="margin-bottom: 20px;">
+      <label for="version-select">Choose a version:</label>
+      <select name="versions" id="version-select">
+        <option value="">--Please choose a version--</option>
+        <option value="kjv">King James Version</option>
+        <option value="nkjv">New King James Version</option>
+        <option value="nlt">New Living Translation</option>
+        <option value="niv">New International Version</option>
+        <option value="esv">English Standard Version</option>
+        <option value="csb">Christian Standard Bible</option>
+        <option value="nasb20">New American Standard Bible 2020</option>
+        <option value="nasb95">New American Standard Bible 1995</option>
+        <option value="lsb">Legacy Standard Bible</option>
+        <option value="net">New English Translation</option>
+        <option value="rsv">Revised Standard Version</option>
+        <option value="asv">American Standard Version</option>
+        <option value="ylt">Young's Literal Translation</option>
+        <option value="dby">Darby Translation</option>
+        <option value="web">Webster's Bible</option>
+        <option value="hnv">Hebrew Names Version</option>
+      </select>
+    </div>
+    <div class="block">
+      <p>Options:</p>
+      <input type="checkbox" id="overwrite-links">
+      <label for="overwrite-links">Overwrite links</label>
+      <!-- 
+      <br/>
+      <input type="checkbox" id="link-formatting">
+      <label for="link-formatting">Don't format links to the default link style (NOT IMPLEMENTED)</label>
+      -->
+      <br/>
+      <input type="checkbox" id="save-prefs">
+      <label for="save-prefs">Save preferences</label> 
+    </div>
+    <div class="block" id="button-bar">
+      <button class="blue" id="run-linker">Link Verses</button>
+      <!-- <button id="run-linker-selection">Link Verses In Selection</button> -->
+    </div>
+  </form>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+  $(function() {
+    // load prefs
+    google.script.run.withSuccessHandler(loadPreferences).withFailureHandler(showError).getPreferences();
+
+    // assign button click handler
+    $('#run-linker').click(run_linker);
+
+    // if save-prefs is checked, save prefs if any change
+    $('#version-select, #overwrite-links, #link-formatting, #save-prefs').change(function() {
+      if ($('#save-prefs').is(':checked')) {
+        savePreferences();
+      }
+    });
+
+    // // when save-prefs is checked, save prefs
+    // $('#save-prefs').change(function() {
+    //   if ($(this).is(':checked')) {
+    //     savePreferences();
+    //   }
+    // });
+  });
+
+  // callback function to load prefs
+  function loadPreferences(prefs) {
+    $('#version-select').val(prefs.version);
+    $('#save-prefs').prop('checked', prefs.save_prefs == "true");
+    $('#overwrite-links').prop('checked', prefs.overwrite_links == "true");
+    // $('#link-formatting').prop('checked', prefs.allow_link_formatting == "true");
+  }
+
+  // callback function to save prefs
+  function savePreferences() {
+    const currentPrefs = {
+      version: $('#version-select').val(),
+      save_prefs: $('#save-prefs').is(':checked'),
+      overwrite_links: $('#overwrite-links').is(':checked'),
+      allow_link_formatting: "true"
+      // allow_link_formatting: $('#link-formatting').is(':checked')
+    };
+    google.script.run
+      .withFailureHandler(showError)
+      .savePreferences(currentPrefs);
+  }
+
+  // server-side function for link button
+  function run_linker() {
+    this.disabled = true;
+    $('#error').remove();
+    status_div = $('<div id="status">Working...</div>')
+    $('#button-bar').after(status_div)
+    const version = $('#version-select').val();
+    const overwrite_links = $('#overwrite-links').is(':checked');
+    // const allow_link_formatting = $('#link-formatting').is(':checked');
+    const save_prefs = $('#save-prefs').is(':checked');
+
+    google.script.run
+      .withSuccessHandler(function(return_status, element) {
+        element.disabled = false;
+        $('#status').remove();
+      })
+      .withFailureHandler(function(msg, element) {
+        showError(msg, $('#button-bar'));
+        element.disabled = false;
+        $('#status').remove();
+      })
+      .withUserObject(this)
+      .link(version, overwrite_links);
+  }
+
+  // creates a div displaying the error
+  function showError(msg, element) {
+    const div = $('<div id="error" class="error">' + msg + '</div>');
+    $(element).after(div);
+  }
+</script>
+</body>
+</html>

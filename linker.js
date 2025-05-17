@@ -1,43 +1,51 @@
+// @OnlyCurrentDoc
 
-// ***************************************************************
-// ******************** BEGIN section to edit ********************
-// ***************************************************************
+// ******************** Startup functions ********************
 
-/* ***********************************************************************************
-   * 
-   *  Version options: 
-   * 
-   *  kjv       King James Version
-   *  nkjv      New King James Version
-   *  nlt       New Living Translation
-   *  niv       New International Version
-   *  esv       English Standard Version
-   *  csb       Christian Standard Bible
-   *  nasb20    New American Standard Bible 2020
-   *  nasb95    New American Standard Bible 1995
-   *  lsb       Legacy Standard Bible
-   *  net       New English Translation
-   *  rsv       Revised Standard Version
-   *  asv       American Standard Version
-   *  ylt       Young's Literal Translation
-   *  dby       Darby Translation
-   *  web       Webster's Bible
-   *  hnv       Hebrew Names Version
-   *
-   *********************************************************************************** */
+function onOpen(e) {
+  DocumentApp.getUi().createAddonMenu().addItem('Start', 'showMenu').addToUi();
+}
 
-// this is simply the link from the address bar while in the doc
-// your account must have access to edit the doc
-var doc_link = "https://docs.google.com/document/d/1zXZ97LJCWgLCQ020hsMypwunHve-MiL7TrcIcAvzpR0/edit"; // test file doc
+function onInstall(e) {
+  onOpen(e);
+}
+
+function showMenu() {
+  const ui = HtmlService.createHtmlOutputFromFile('menu').setTitle('Bible Verse Linker');
+  DocumentApp.getUi().showSidebar(ui);
+}
+
+function getPreferences() {
+  const userProperties = PropertiesService.getUserProperties();
+
+  // check for empty properties and set defaults
+  if (userProperties.getProperty('version') === null) {
+    userProperties.setProperty('version', "");
+  }
+  if (userProperties.getProperty('overwrite_links') === null) {
+    userProperties.setProperty('overwrite_links', 'false'); // Explicitly string for clarity
+  }
+  if (userProperties.getProperty('allow_link_formatting') === null) {
+    userProperties.setProperty('allow_link_formatting', 'true');
+  }
+  if (userProperties.getProperty('save_prefs') === null) {
+    userProperties.setProperty('save_prefs', 'false');
+  }
+  
+  return userProperties.getProperties();
+}
+
+function savePreferences(prefs) {
+  PropertiesService.getUserProperties()
+    .setProperty('version', prefs.version)
+    .setProperty('overwrite_links', prefs.overwrite_links)
+    .setProperty('allow_link_formatting', prefs.allow_link_formatting)
+    .setProperty('save_prefs', prefs.save_prefs);
+}
 
 var bible_version = "nkjv";
 var overwrite_links = false;
 var allow_link_formatting = true; // not implemented yet
-
-// ***************************************************************
-// ******************** END section to edit **********************
-// ***************************************************************
-
 
 
 // ******************** Data ********************
@@ -123,21 +131,15 @@ var verse_end = 1;
 var doc, search_string, search_field, search_result, search_result_element;
 
 
-// ******************** Utility functions ********************
-
-function onInstall(e) {
-  onOpen(e);
-}
-
-function onOpen(e) {
-  doc = DocumentApp.openByUrl(doc_link);
-  link();
-}
-
-
 // ******************** Linker functions ********************
 
-function link() {
+function link(bible_version_in, overwrite_links_in, allow_link_formatting_in=true) {
+  bible_version = bible_version_in;
+  overwrite_links = overwrite_links_in;
+  allow_link_formatting = allow_link_formatting_in;
+
+  doc = DocumentApp.getActiveDocument()
+
   for (let i = 0; i < 66; i++) {
     current_book = books[i];
     for (let j = 0; j < current_book.names.length; j++) {
@@ -146,7 +148,7 @@ function link() {
     }
   }
 
-  return true; 
+  return {success: true};
 }
 
 
@@ -323,20 +325,15 @@ function parse_reference(reference) {
   }
 
   // insert link
-  let url = get_url(chapter, verse_start, verse_end);
+  let url = "https://www.blueletterbible.org/";
+  if (verse_end == verse_start) {
+    url = url + bible_version + '/' + current_book.blb + '/' + chapter + '/' + verse_start;
+  } else {
+    url = url + bible_version + '/' + current_book.blb + '/' + chapter + '/' + verse_start + '-' + verse_end;
+  }
   let start_pos = reference_start_pos + reference.start_pos;
   let end_pos = reference_start_pos + reference.end_pos - 1;
   search_result_element.setLinkUrl(start_pos, end_pos, url);
-}
-
-
-function get_url(chapter, verse_start, verse_end) {
-  let url_head = "https://www.blueletterbible.org/";
-  if (verse_end == verse_start) {
-    return url_head + bible_version + '/' + current_book.blb + '/' + chapter + '/' + verse_start;
-  } else {
-    return url_head + bible_version + '/' + current_book.blb + '/' + chapter + '/' + verse_start + '-' + verse_end;
-  }
 }
 
 
