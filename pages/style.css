@@ -1,0 +1,21 @@
+body {    
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+div.header {
+    display: flex;
+    justify-content: center;
+    background-color: #83c7ff;
+    padding: 0%;
+}
+
+div.footer {
+    display: flex;
+    justify-content: center;
+    background-color: #83c7ff;
+    padding: 2%;
+}
+
+div.content {
+    padding: 5%;
+}
