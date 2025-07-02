@@ -4,14 +4,16 @@ body {
 
 div.header {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     background-color: #83c7ff;
     padding: 0%;
 }
 
 div.footer {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     background-color: #83c7ff;
     padding: 2%;
 }
